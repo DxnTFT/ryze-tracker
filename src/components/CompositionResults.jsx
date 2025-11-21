@@ -1,11 +1,25 @@
 import React, { useState } from 'react';
 import UnitIcon from './UnitIcon';
 import WildcardIcon from './WildcardIcon';
-import { LOCKED_UNITS } from '../data/units';
+// 1. Import unit data from the units file
+import { LOCKED_UNITS, units } from '../data/units';
+// 2. Import regionalTraits from the correct traits file
+import { regionalTraits } from '../data/traits';
 
-// --- Placeholder/Fix Definitions (Keep these until you properly import them) ---
+// --- Helper Functions (Defined here or imported from a utility file) ---
+
+// Gets all units that have this trait and NO OTHER regional trait
+function getAllSingleRegionalUnits(trait) {
+    const regionalTraitNames = regionalTraits.map(rt => rt[0]);
+    return units.filter(u => {
+        const regional = u.traits.filter(t => regionalTraitNames.includes(t));
+        return regional.includes(trait) && regional.length === 1;
+    });
+}
+
+// --- Placeholder/Fix Definitions (Adjust these for your actual Set/Data) ---
 const SHURIMA_UNITS = [
-    "Azir", "Nasus", "Renekton", "Xerath"
+    "Azir", "Nasus", "Renekton", "Xerath", "K'Sante", "Taliyah", "Akshan", "Cassiopeia", "Kha'Zix"
 ];
 const AZIR_NAME = "Azir";
 // -------------------------------------------------------------------------------
@@ -35,12 +49,10 @@ export default function CompositionResults({ results, currentActive, selectedUni
         if (!isAzirSelected) {
             const hasShurima = sol.units.some(item => {
                 const isShurimaUnit = item.type === 'unit' && SHURIMA_UNITS.includes(item.unit.name);
-                const isShurimaWildcard = item.type === 'wildcard' && item.trait === 'Shurima'; // <-- NEW CHECK
+                const isShurimaWildcard = item.type === 'wildcard' && item.trait === 'Shurima';
 
                 return isShurimaUnit || isShurimaWildcard;
             });
-
-            // If Azir is NOT selected, and the solution HAS a Shurima unit or wildcard, filter it out.
             if (hasShurima) return false;
         }
 
@@ -95,9 +107,36 @@ export default function CompositionResults({ results, currentActive, selectedUni
                 {solutions && solutions.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {solutions.map((sol, idx) => {
-                            // Separate wildcards and units
+
+                            // *** NEW LOGIC START ***
+                            const usedWildcardUnits = {};
+                            const unitIndexTracker = {};
+
+                            // Separate and process wildcards and units
                             const bridges = sol.units.filter(item => item.type === 'unit').map(item => item.unit);
-                            const wildcards = sol.units.filter(item => item.type === 'wildcard');
+                            const wildcards = sol.units.filter(item => item.type === 'wildcard').map(wildcardItem => {
+                                const trait = wildcardItem.trait;
+
+                                if (!usedWildcardUnits[trait]) {
+                                    usedWildcardUnits[trait] = getAllSingleRegionalUnits(trait);
+                                    unitIndexTracker[trait] = 0;
+                                }
+
+                                const allUnits = usedWildcardUnits[trait];
+                                let unitIndex = unitIndexTracker[trait];
+
+                                // Cycle units using modulo (%)
+                                const assignedUnit = allUnits.length > 0 ? allUnits[unitIndex % allUnits.length] : null;
+
+                                unitIndexTracker[trait]++;
+
+                                // Return the wildcard object with the assigned unit attached
+                                return {
+                                    ...wildcardItem,
+                                    unit: assignedUnit // ATTACH THE UNIQUE UNIT HERE
+                                };
+                            });
+                            // *** NEW LOGIC END ***
 
                             const totalUnits = selectedUnits.length + sol.units.length;
                             const isOverLevel8 = totalUnits > 8;
@@ -153,6 +192,7 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                             <div key={`wildcard-${wIdx}`}>
                                                 <WildcardIcon
                                                     trait={wildcard.trait}
+                                                    unit={wildcard.unit} // <-- PASSING THE UNIQUE UNIT
                                                     size="48px"
                                                 />
                                             </div>
