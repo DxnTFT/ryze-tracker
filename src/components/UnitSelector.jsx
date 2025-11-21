@@ -3,7 +3,7 @@ import { units, LOCKED_UNITS } from '../data/units';
 import { regionalTraits } from '../data/traits';
 import UnitIcon from './UnitIcon';
 
-export default function UnitSelector({ selectedUnits, onUnitAdd, onUnitRemove }) {
+export default function UnitSelector({ selectedUnits, onUnitToggle }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [costFilter, setCostFilter] = useState('all');
     const [showLocked, setShowLocked] = useState(true); // Default: Show locked units
@@ -50,11 +50,6 @@ export default function UnitSelector({ selectedUnits, onUnitAdd, onUnitRemove })
                     Hide Unlockables
                 </label>
             </div>
-
-            {/* Instruction text */}
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', fontStyle: 'italic' }}>
-                Left-click to add, Right-click to remove
-            </p>
 
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                 <input
@@ -119,11 +114,7 @@ export default function UnitSelector({ selectedUnits, onUnitAdd, onUnitRemove })
                             isSelected={isSelected}
                             isDimmed={isDimmed}
                             isLocked={isLocked}
-                            onClick={() => onUnitAdd(unit)}
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                onUnitRemove(unit);
-                            }}
+                            onClick={() => onUnitToggle(unit)}
                             size="48px"
                         />
                     );

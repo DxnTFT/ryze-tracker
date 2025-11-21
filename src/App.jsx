@@ -11,16 +11,14 @@ function App() {
   const [level, setLevel] = useState(8);
   const [results, setResults] = useState({ solutions: [], isUnlocked: false, activeTraits: [] });
 
-  const handleUnitAdd = (unit) => {
+  const handleUnitToggle = (unit) => {
     setSelectedUnits(prev => {
       const exists = prev.find(u => u.name === unit.name);
-      if (exists) return prev; // Already selected
+      if (exists) {
+        return prev.filter(u => u.name !== unit.name);
+      }
       return [...prev, unit];
     });
-  };
-
-  const handleUnitRemove = (unit) => {
-    setSelectedUnits(prev => prev.filter(u => u.name !== unit.name));
   };
 
   const handleEmblemAdd = (trait) => {
@@ -67,13 +65,17 @@ function App() {
       <div className="selector-pane">
         <UnitSelector
           selectedUnits={selectedUnits}
-          onUnitAdd={handleUnitAdd}
-          onUnitRemove={handleUnitRemove}
+          onUnitToggle={handleUnitToggle}
         />
 
         {/* Emblems Section */}
         <div className="glass-panel" style={{ marginTop: '1.5rem' }}>
-          <h3 className="section-title" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Selected Emblems</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 className="section-title" style={{ fontSize: '1.1rem', marginBottom: 0, borderBottom: 'none' }}>Selected Emblems</h3>
+            <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, fontStyle: 'italic' }}>
+              Left-click to add, Right-click to remove
+            </p>
+          </div>
           <EmblemSelector
             selectedEmblems={selectedEmblems}
             onEmblemAdd={handleEmblemAdd}
@@ -94,7 +96,7 @@ function App() {
                 <UnitIcon
                   key={unit.name}
                   unit={unit}
-                  onClick={() => handleUnitRemove(unit)}
+                  onClick={() => handleUnitToggle(unit)}
                   size="48px"
                 />
               ))
