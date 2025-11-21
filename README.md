@@ -4,7 +4,7 @@
 
 **A powerful TFT Set 16 composition optimizer to help you unlock Ryze**
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://github.com/DxnTFT/ryze-tracker)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://ryze-tracker.vercel.app)
 [![React](https://img.shields.io/badge/React-18-blue)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5-purple)](https://vitejs.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
