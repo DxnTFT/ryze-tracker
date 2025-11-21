@@ -11,14 +11,16 @@ function App() {
   const [level, setLevel] = useState(8);
   const [results, setResults] = useState({ solutions: [], isUnlocked: false, activeTraits: [] });
 
-  const handleUnitToggle = (unit) => {
+  const handleUnitAdd = (unit) => {
     setSelectedUnits(prev => {
       const exists = prev.find(u => u.name === unit.name);
-      if (exists) {
-        return prev.filter(u => u.name !== unit.name);
-      }
+      if (exists) return prev; // Already selected
       return [...prev, unit];
     });
+  };
+
+  const handleUnitRemove = (unit) => {
+    setSelectedUnits(prev => prev.filter(u => u.name !== unit.name));
   };
 
   const handleEmblemAdd = (trait) => {
@@ -65,7 +67,8 @@ function App() {
       <div className="selector-pane">
         <UnitSelector
           selectedUnits={selectedUnits}
-          onUnitToggle={handleUnitToggle}
+          onUnitAdd={handleUnitAdd}
+          onUnitRemove={handleUnitRemove}
         />
 
         {/* Emblems Section */}
@@ -91,7 +94,7 @@ function App() {
                 <UnitIcon
                   key={unit.name}
                   unit={unit}
-                  onClick={() => handleUnitToggle(unit)}
+                  onClick={() => handleUnitRemove(unit)}
                   size="48px"
                 />
               ))

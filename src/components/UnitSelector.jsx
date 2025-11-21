@@ -3,7 +3,7 @@ import { units, LOCKED_UNITS } from '../data/units';
 import { regionalTraits } from '../data/traits';
 import UnitIcon from './UnitIcon';
 
-export default function UnitSelector({ selectedUnits, onUnitToggle }) {
+export default function UnitSelector({ selectedUnits, onUnitAdd, onUnitRemove }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [costFilter, setCostFilter] = useState('all');
     const [showLocked, setShowLocked] = useState(true); // Default: Show locked units
@@ -36,7 +36,7 @@ export default function UnitSelector({ selectedUnits, onUnitToggle }) {
 
     return (
         <div className="glass-panel">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <h2 className="section-title" style={{ marginBottom: 0, borderBottom: 'none' }}>Select Units</h2>
 
                 {/* Toggle for Locked Units */}
@@ -50,6 +50,11 @@ export default function UnitSelector({ selectedUnits, onUnitToggle }) {
                     Hide Unlockables
                 </label>
             </div>
+
+            {/* Instruction text */}
+            <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', fontStyle: 'italic' }}>
+                Left-click to add, Right-click to remove
+            </p>
 
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                 <input
@@ -114,7 +119,11 @@ export default function UnitSelector({ selectedUnits, onUnitToggle }) {
                             isSelected={isSelected}
                             isDimmed={isDimmed}
                             isLocked={isLocked}
-                            onClick={onUnitToggle}
+                            onClick={() => onUnitAdd(unit)}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                onUnitRemove(unit);
+                            }}
                             size="48px"
                         />
                     );

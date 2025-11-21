@@ -36,6 +36,12 @@ body {
   gap: 2rem;
 }
 
+@media (min-width: 769px) {
+  .app-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (min-width: 1200px) {
   .app-container {
     grid-template-columns: 1fr 450px;
@@ -154,4 +160,78 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  #root {
+    padding: 1rem;
+  }
+
+  .app-container {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+
+  /* Adjust header */
+  header h1 {
+    font-size: 2rem !important;
+  }
+
+  /* Glass panels - reduce padding */
+  .glass-panel {
+    padding: 1rem !important;
+  }
+
+  /* Section titles */
+  .section-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Make buttons and inputs more touch-friendly */
+  input[type="text"],
+  select,
+  button {
+    min-height: 44px;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+  }
+
+  /* Remove sticky positioning on mobile */
+  .results-pane {
+    position: static !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+
+  .selector-pane {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  #root {
+    padding: 0.75rem;
+  }
+
+  .app-container {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.75rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .glass-panel {
+    padding: 0.875rem !important;
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
 }

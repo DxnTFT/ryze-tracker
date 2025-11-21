@@ -18,7 +18,7 @@ const COST_BORDERS = {
     7: '2px solid #ffb93b'
 };
 
-export default function UnitIcon({ unit, onClick, isSelected, isDimmed = false, isLocked = false, size = '64px' }) {
+export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isDimmed = false, isLocked = false, size = '64px' }) {
     const [imgError, setImgError] = useState(false);
 
     // Special mappings for Set 16 / Custom units
@@ -86,6 +86,7 @@ export default function UnitIcon({ unit, onClick, isSelected, isDimmed = false, 
     return (
         <div
             onClick={() => onClick && onClick(unit)}
+            onContextMenu={onContextMenu}
             style={{
                 width: size,
                 height: size,
