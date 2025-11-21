@@ -12,7 +12,9 @@ import { regionalTraits } from '../data/traits';
 function getAllSingleRegionalUnits(trait) {
     const regionalTraitNames = regionalTraits.map(rt => rt[0]);
     return units.filter(u => {
-        const regional = u.traits.filter(t => regionalTraitNames.includes(t));
+        // Ensure u.traits exists before calling filter
+        const unitTraits = u.traits || [];
+        const regional = unitTraits.filter(t => regionalTraitNames.includes(t));
         return regional.includes(trait) && regional.length === 1;
     });
 }
@@ -29,13 +31,27 @@ export default function CompositionResults({ results, currentActive, selectedUni
     const [hideUnselectedLocked, setHideUnselectedLocked] = useState(false);
     const selectedUnitNames = new Set(selectedUnits.map(u => u.name));
 
+    // Total units already selected by the user
+    const selectedUnitCount = selectedUnits.length;
+
     // Check for Azir's presence
     const isAzirSelected = selectedUnitNames.has(AZIR_NAME);
 
-    // Filter solutions based on hideUnselectedLocked flag AND Shurima rule
+    // Filter solutions based on hideUnselectedLocked flag, Shurima rule, AND LEVEL
     const solutions = allSolutions.filter(sol => {
 
-        // 1. Check for locked units (Existing Logic)
+        // Calculate the total number of units this composition requires:
+        // User's selected units + units in the solution
+        const solUnitCount = sol.units.length;
+        const totalUnitRequirement = selectedUnitCount + solUnitCount;
+
+        // 1. **NEW LEVEL CHECK**
+        // If the required unit count exceeds the current player level, filter it out.
+        if (totalUnitRequirement > level) {
+            return false;
+        }
+
+        // 2. Check for locked units (Existing Logic)
         if (hideUnselectedLocked) {
             const hasLocked = sol.units.some(item => {
                 if (item.type !== 'unit') return false;
@@ -45,7 +61,7 @@ export default function CompositionResults({ results, currentActive, selectedUni
             if (hasLocked) return false;
         }
 
-        // 2. **REVISED Shurima Rule Check**
+        // 3. REVISED Shurima Rule Check
         if (!isAzirSelected) {
             const hasShurima = sol.units.some(item => {
                 const isShurimaUnit = item.type === 'unit' && SHURIMA_UNITS.includes(item.unit.name);
@@ -84,6 +100,8 @@ export default function CompositionResults({ results, currentActive, selectedUni
                 </button>
             </div>
 
+            {/* ... Status Div remains the same ... */}
+
             <div style={{ marginBottom: '1rem' }}>
                 <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
                     Status:
@@ -108,7 +126,7 @@ export default function CompositionResults({ results, currentActive, selectedUni
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {solutions.map((sol, idx) => {
 
-                            // *** NEW LOGIC START ***
+                            // *** Wildcard Logic (Remains the same) ***
                             const usedWildcardUnits = {};
                             const unitIndexTracker = {};
 
@@ -136,10 +154,16 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                     unit: assignedUnit // ATTACH THE UNIQUE UNIT HERE
                                 };
                             });
-                            // *** NEW LOGIC END ***
+                            // *** End Wildcard Logic ***
 
-                            const totalUnits = selectedUnits.length + sol.units.length;
-                            const isOverLevel8 = totalUnits > 8;
+                            // Re-calculate the total units for display purposes
+                            const totalUnits = selectedUnitCount + sol.units.length;
+
+                            // Check against the passed-in level prop for the warning display
+                            const isOverLevel = totalUnits > level;
+
+                            // Note: If you want to check against Level 8 specifically, use: const isOverLevel8 = totalUnits > 8;
+                            // but checking against 'level' (the prop) is more general and correct.
 
                             return (
                                 <div
@@ -156,14 +180,15 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                                             <span style={{
                                                 fontSize: '0.8rem',
-                                                color: isOverLevel8 ? '#f87171' : '#94a3b8',
-                                                fontWeight: isOverLevel8 ? 'bold' : 'normal'
+                                                color: isOverLevel ? '#f87171' : '#94a3b8',
+                                                fontWeight: isOverLevel ? 'bold' : 'normal'
                                             }}>
                                                 Level {totalUnits}
                                             </span>
                                         </div>
                                     </div>
 
+                                    {/* ... Unit/Wildcard display block remains the same ... */}
                                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                         {/* Show selected units (grayed out) */}
                                         {selectedUnits.map((unit, uIdx) => (
@@ -198,6 +223,7 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                             </div>
                                         ))}
                                     </div>
+                                    {/* ... Trait list display remains the same ... */}
 
                                     <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                                         {sol.activeTraits.map(trait => (
@@ -228,6 +254,7 @@ export default function CompositionResults({ results, currentActive, selectedUni
                 )}
             </div>
 
+            {/* ... Currently Active Div remains the same ... */}
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
                 <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#e2e8f0' }}>
                     Currently Active ({currentActive.length}/5)
