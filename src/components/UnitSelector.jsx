@@ -89,7 +89,7 @@ export default function UnitSelector({ selectedUnits, onUnitToggle }) {
             <div style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '0.75rem',
+                gap: '0.5rem',
                 paddingTop: '0.5rem'
             }}>
                 {costFilteredUnits.map(unit => {
@@ -115,7 +115,7 @@ export default function UnitSelector({ selectedUnits, onUnitToggle }) {
                             isDimmed={isDimmed}
                             isLocked={isLocked}
                             onClick={onUnitToggle}
-                            size="56px"
+                            size="48px"
                         />
                     );
                 })}
