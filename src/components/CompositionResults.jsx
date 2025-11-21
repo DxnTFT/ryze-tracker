@@ -1,14 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 import UnitIcon from './UnitIcon';
 import { LOCKED_UNITS } from '../data/units';
 
-export default function CompositionResults({ results, currentActive, selectedUnits = [] }) {
-    const { isUnlocked, solutions, activeTraits } = results;
+export default function CompositionResults({ results, currentActive, selectedUnits = [], level = 8 }) {
+    const { isUnlocked, solutions: allSolutions, activeTraits } = results;
+    const [hideUnselectedLocked, setHideUnselectedLocked] = useState(false);
+
+    // Get names of selected units for checking
+    const selectedUnitNames = new Set(selectedUnits.map(u => u.name));
+
+    // Filter solutions to only show those that fit within the level cap
+    // and optionally hide compositions with unselected locked units
+    const solutions = allSolutions.filter(sol => {
+        const totalUnits = selectedUnits.length + sol.units.length;
+        if (totalUnits > level) return false;
+
+        // If hiding unselected locked units, filter out compositions that contain them
+        if (hideUnselectedLocked) {
+            const hasUnselectedLocked = sol.units.some(u =>
+                LOCKED_UNITS.includes(u.name) && !selectedUnitNames.has(u.name)
+            );
+            if (hasUnselectedLocked) return false;
+        }
+
+        return true;
+    });
     const missing = 5 - currentActive.length;
 
     return (
         <div className="glass-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <h2 className="section-title">Optimization Results</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 className="section-title" style={{ marginBottom: 0 }}>Optimization Results</h2>
+                <button
+                    onClick={() => setHideUnselectedLocked(!hideUnselectedLocked)}
+                    style={{
+                        background: hideUnselectedLocked ? 'rgba(6, 182, 212, 0.2)' : 'rgba(30, 41, 59, 0.5)',
+                        border: hideUnselectedLocked ? '1px solid var(--secondary-color)' : '1px solid var(--glass-border)',
+                        color: hideUnselectedLocked ? '#22d3ee' : '#94a3b8',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        transition: 'all 0.2s',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    {hideUnselectedLocked ? '🔒 Hiding Unlockables' : 'Show All Units'}
+                </button>
+            </div>
 
             <div style={{ marginBottom: '1rem' }}>
                 <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>
