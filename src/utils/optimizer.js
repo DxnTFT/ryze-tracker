@@ -8,18 +8,21 @@ const regionalSet = new Set(regionalTraitNames);
 // Filter out 5-cost and 7-cost units from the optimizer pool
 const availableUnits = units.filter(u => u.cost !== 5 && u.cost !== 7);
 
-// Pre-process units
+// Classify units as wildcards (single regional) or specific (multi-regional)
+const wildcardUnits = availableUnits.filter(u => {
+    const reg = u.traits.filter(t => regionalSet.has(t));
+    return reg.length === 1;
+});
+
 const multiRegionalUnits = availableUnits.filter(u => {
     const reg = u.traits.filter(t => regionalSet.has(t));
     return reg.length > 1;
 });
 
-// Map of Trait -> Single-Regional Units (sorted by cost)
-const traitUnitsMap = {};
+// Map of Trait -> Wildcard count available
+const wildcardCountMap = {};
 regionalTraitNames.forEach(trait => {
-    traitUnitsMap[trait] = availableUnits
-        .filter(u => u.traits.includes(trait))
-        .sort((a, b) => a.cost - b.cost);
+    wildcardCountMap[trait] = wildcardUnits.filter(u => u.traits.includes(trait)).length;
 });
 
 function getCombinations(arr, k) {
@@ -86,7 +89,7 @@ export function findAllSolutions(currentUnits, currentEmblems) {
             return { isUnlocked: true, solutions: [], activeTraits: combo };
         }
 
-        // 3. Solve for this combo
+        // 3. Solve for this combo using wildcards
         const comboSet = new Set(combo);
 
         // Filter multi-regional units that are relevant and not already owned
@@ -108,14 +111,12 @@ export function findAllSolutions(currentUnits, currentEmblems) {
         })();
 
         for (const bridges of bridgeSubsets) {
-            let currentCost = 0;
             const currentSolution = [];
             const currentNeeds = { ...needs };
 
-            // Apply bridges
+            // Apply bridges (multi-regional units)
             for (const unit of bridges) {
-                currentCost += unit.cost;
-                currentSolution.push(unit);
+                currentSolution.push({ type: 'unit', unit });
                 unit.traits.forEach(t => {
                     if (currentNeeds[t]) {
                         currentNeeds[t] = Math.max(0, currentNeeds[t] - 1);
@@ -123,39 +124,50 @@ export function findAllSolutions(currentUnits, currentEmblems) {
                 });
             }
 
-            // Fill remaining needs with cheapest units
+            // Fill remaining needs with wildcards
             let valid = true;
             for (const trait of combo) {
                 let count = currentNeeds[trait];
                 if (!count || count <= 0) continue;
 
-                // Get candidates for this trait
-                // Must not be in currentUnits or currentSolution
-                // EXCLUDE relevantBridges to avoid double counting or suboptimal paths
-                const candidates = traitUnitsMap[trait].filter(u =>
-                    !currentUnitNames.has(u.name) &&
-                    !currentSolution.includes(u) &&
-                    !relevantBridges.includes(u)
-                );
+                // Check if we have enough wildcards available
+                const availableWildcards = wildcardCountMap[trait];
+                // Count how many wildcards from this trait are already in currentUnits
+                const usedWildcards = currentUnits.filter(u =>
+                    u.traits.includes(trait) &&
+                    u.traits.filter(t => regionalSet.has(t)).length === 1
+                ).length;
 
-                if (candidates.length < count) {
+                const remainingWildcards = availableWildcards - usedWildcards;
+
+                if (remainingWildcards < count) {
                     valid = false;
                     break;
                 }
 
+                // Add wildcard slots
                 for (let i = 0; i < count; i++) {
-                    const u = candidates[i];
-                    currentCost += u.cost;
-                    currentSolution.push(u);
+                    currentSolution.push({ type: 'wildcard', trait });
                 }
             }
 
             if (valid) {
-                const signature = currentSolution.map(u => u.name).sort().join(',');
+                // Create a signature for deduplication
+                const bridgeNames = bridges.map(u => u.name).sort().join(',');
+                const wildcardCounts = {};
+                currentSolution.forEach(item => {
+                    if (item.type === 'wildcard') {
+                        wildcardCounts[item.trait] = (wildcardCounts[item.trait] || 0) + 1;
+                    }
+                });
+                const wildcardSig = Object.entries(wildcardCounts)
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(([t, c]) => `${t}:${c}`)
+                    .join('|');
+                const signature = `${bridgeNames}__${wildcardSig}`;
 
                 allSolutions.push({
                     units: currentSolution,
-                    cost: currentCost,
                     activeTraits: combo,
                     signature: signature
                 });
@@ -163,31 +175,25 @@ export function findAllSolutions(currentUnits, currentEmblems) {
         }
     }
 
-    // Deduplicate by signature, keeping lowest cost
+    // Deduplicate by signature
     const uniqueSolutions = [];
     const seenSignatures = new Set();
 
-    // Sort by Team Size Tier (<=8 vs >8), then by Cost
+    // Sort by team size (prefer smaller teams)
     allSolutions.sort((a, b) => {
         const sizeA = currentUnits.length + a.units.length;
         const sizeB = currentUnits.length + b.units.length;
 
-        // Tier 0: Size <= 8
-        // Tier 1: Size > 8
+        // Prefer size <= 8
         const tierA = sizeA <= 8 ? 0 : 1;
         const tierB = sizeB <= 8 ? 0 : 1;
 
         if (tierA !== tierB) {
-            return tierA - tierB; // Lower tier first
+            return tierA - tierB;
         }
 
-        // If both in Tier 1 (Size > 8), prefer smaller size (Level 9 > Level 10)
-        if (tierA === 1) {
-            if (sizeA !== sizeB) return sizeA - sizeB;
-        }
-
-        // Finally sort by cost
-        return a.cost - b.cost;
+        // Within same tier, prefer smaller size
+        return sizeA - sizeB;
     });
 
     for (const sol of allSolutions) {

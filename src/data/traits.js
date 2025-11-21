@@ -7,6 +7,8 @@ export const regionalTraits = [
     ['Ixtal', 3],
     ['Noxus', 3],
     ['Piltover', 2],
+    ['Shadow Isles', 2],
+    ['Shurima', 2],
     ['Targon', 1],
     ['Void', 2],
     ['Yordle', 2],
@@ -14,4 +16,4 @@ export const regionalTraits = [
 ];
 
 // Traits that don't have emblems available
-export const traitsWithoutEmblems = ['Targon'];
+export const traitsWithoutEmblems = ['Targon', 'Shurima', 'Shadow Isles'];

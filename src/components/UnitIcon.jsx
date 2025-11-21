@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { regionalTraits } from '../data/traits';
 
+// Cost based colors and borders used for the cost indicator
 const COST_COLORS = {
     1: '#808080', // Grey
     2: '#11b288', // Green
     3: '#207ac7', // Blue
     4: '#c38bce', // Purple
     5: '#ffb93b', // Gold
-    7: '#ffb93b'  // Gold (7 cost)
+    7: '#ffb93b' // Gold (7 cost)
 };
 
 const COST_BORDERS = {
@@ -18,12 +20,23 @@ const COST_BORDERS = {
     7: '2px solid #ffb93b'
 };
 
-export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isDimmed = false, isLocked = false, size = '64px' }) {
+// Helper set of regional trait names for tooltip generation
+const regionalSet = new Set(regionalTraits.map(t => t[0]));
+
+export default function UnitIcon({
+    unit,
+    onClick,
+    onContextMenu,
+    isSelected,
+    isDimmed = false,
+    isLocked = false,
+    size = '64px',
+    isWildcard = false // true for single‑regional units acting as wildcards
+}) {
     const [imgError, setImgError] = useState(false);
 
-    // Special mappings for Set 16 / Custom units
+    // Mapping for special unit names / custom assets (unchanged from previous version)
     const NAME_MAPPINGS = {
-        // Standard Data Dragon Fixes
         "Cho'Gath": "Chogath",
         "Kog'Maw": "KogMaw",
         "Rek'Sai": "RekSai",
@@ -31,7 +44,6 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
         "Bel'Veth": "Belveth",
         "Kai'Sa": "Kaisa",
         "Kha'Zix": "Khazix",
-        "LeBlanc": "Leblanc",
         "Dr.Mundo": "DrMundo",
         "Jarvan IV": "JarvanIV",
         "TwistedFate": "TwistedFate",
@@ -41,10 +53,9 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
         "Wukong": "MonkeyKing",
         "Nunu & Willump": "Nunu",
         "TahmKench": "TahmKench",
-
         // TFT Exclusive / Set 16 Units (Community Dragon URLs)
         "Kobuko": "https://raw.communitydragon.org/pbe/game/assets/characters/tft15_kobuko/skins/base/images/tft15_kobuko.tft_set15.png",
-        "Kobuko& Yuumi": "https://raw.communitydragon.org/pbe/game/assets/characters/tft15_kobuko/skins/base/images/tft15_kobuko.tft_set15.png", // Fallback to Kobuko
+        "Kobuko& Yuumi": "https://raw.communitydragon.org/pbe/game/assets/characters/tft15_kobuko/skins/base/images/tft15_kobuko.tft_set15.png",
         "Rift Herald": "https://raw.communitydragon.org/pbe/game/assets/ux/tft/championsplashes/tft_riftherald.png",
         "RiftHerald": "https://raw.communitydragon.org/pbe/game/assets/ux/tft/championsplashes/tft_riftherald.png",
         "Renata Glasc": "https://raw.communitydragon.org/pbe/game/assets/characters/tft13_renataglasc/skins/base/images/tft13_renataglasc.tft_set13.png",
@@ -62,26 +73,25 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
         "Yunara": "https://raw.communitydragon.org/pbe/game/assets/characters/tft16_yunara/skins/base/images/tft16_yunara_splash_centered_0.tft_set16.png",
         "Zaahen": "https://raw.communitydragon.org/pbe/game/assets/characters/tft16_zaahen/skins/base/images/tft16_zaahen_splash_centered_0.tft_set16.png",
         "Mel": "https://raw.communitydragon.org/pbe/game/assets/characters/tft13_missmage/skins/base/images/tft13_missmage.tft_set13_evolved.png",
-        "Lucian& Senna": "Lucian", // Just show Lucian for now
+        "LeBlanc": "Leblanc",
     };
 
+    // Resolve the image URL for the unit
     let mappedValue = NAME_MAPPINGS[unit.name];
-
-    // Handle special case for names with '&' if not explicitly mapped
     if (!mappedValue && unit.name.includes('&')) {
         const baseName = unit.name.split('&')[0].trim();
-        mappedValue = NAME_MAPPINGS[baseName] || baseName.replace(/['\s.]/g, '');
+        mappedValue = NAME_MAPPINGS[baseName] || baseName.replace(/[\'\s.]/g, '');
     }
-
-    // If no mapping, default to removing spaces/dots/apostrophes
     if (!mappedValue) {
-        mappedValue = unit.name.replace(/['\s.]/g, '');
+        mappedValue = unit.name.replace(/[\'\s.]/g, '');
     }
-
-    // Determine final URL
     const imgUrl = mappedValue.startsWith('http')
         ? mappedValue
         : `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/${mappedValue}.png`;
+
+    // Determine the regional trait for tooltip when this is a wildcard
+    const wildcardTrait = unit.traits.find(t => regionalSet.has(t));
+    const tooltip = isWildcard && wildcardTrait ? `Any ${wildcardTrait} Trait` : unit.name;
 
     return (
         <div
@@ -98,7 +108,7 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
                 filter: isDimmed ? 'grayscale(100%)' : 'none',
                 pointerEvents: isDimmed ? 'none' : 'auto'
             }}
-            title={unit.name}
+            title={tooltip}
         >
             <div style={{
                 width: '100%',
@@ -131,8 +141,20 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
                         {unit.name.substring(0, 4)}
                     </div>
                 )}
+                {isWildcard && (
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        right: '2px',
+                        background: 'rgba(0,0,0,0.6)',
+                        color: '#fbbf24',
+                        padding: '2px 4px',
+                        fontSize: '0.7rem',
+                        borderRadius: '4px',
+                        pointerEvents: 'none'
+                    }}>Any</div>
+                )}
             </div>
-
             {/* Cost Indicator */}
             <div style={{
                 position: 'absolute',
@@ -150,10 +172,7 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
                 alignItems: 'center',
                 justifyContent: 'center',
                 zIndex: 2
-            }}>
-                {unit.cost}
-            </div>
-
+            }}>{unit.cost}</div>
             {/* Selected Checkmark */}
             {isSelected && (
                 <div style={{
@@ -170,11 +189,8 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
                     justifyContent: 'center',
                     fontSize: '10px',
                     zIndex: 2
-                }}>
-                    ✓
-                </div>
+                }}>✓</div>
             )}
-
             {/* Lock Icon */}
             {isLocked && !isSelected && (
                 <div style={{
@@ -182,7 +198,7 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
                     top: '2px',
                     left: '2px',
                     background: 'rgba(0, 0, 0, 0.6)',
-                    color: '#fbbf24', // Amber-400
+                    color: '#fbbf24',
                     borderRadius: '4px',
                     width: '14px',
                     height: '14px',
@@ -192,9 +208,7 @@ export default function UnitIcon({ unit, onClick, onContextMenu, isSelected, isD
                     fontSize: '10px',
                     zIndex: 2,
                     backdropFilter: 'blur(2px)'
-                }}>
-                    🔒
-                </div>
+                }}>🔒</div>
             )}
         </div>
     );

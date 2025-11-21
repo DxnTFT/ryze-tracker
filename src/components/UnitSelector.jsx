@@ -12,10 +12,10 @@ export default function UnitSelector({ selectedUnits, onUnitToggle }) {
     const regionalTraitNames = new Set(regionalTraits.map(t => t[0]));
 
     const validUnits = units.filter(unit => {
-        // Exclude all 5-cost and 7-cost units
-        if (unit.cost === 5 || unit.cost === 7) return false;
+        // Exclude 7-cost units
+        if (unit.cost === 7) return false;
 
-        // 5-cost regional filter (keeping for reference, but already excluded above)
+        // Exclude 5-cost units that are NOT regional
         if (unit.cost === 5) {
             const hasRegional = unit.traits.some(t => regionalTraitNames.has(t));
             if (!hasRegional) return false;

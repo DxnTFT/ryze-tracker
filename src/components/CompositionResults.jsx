@@ -1,30 +1,53 @@
 import React, { useState } from 'react';
 import UnitIcon from './UnitIcon';
+import WildcardIcon from './WildcardIcon';
 import { LOCKED_UNITS } from '../data/units';
+
+// --- Placeholder/Fix Definitions (Keep these until you properly import them) ---
+const SHURIMA_UNITS = [
+    "Azir", "Nasus", "Renekton", "Xerath"
+];
+const AZIR_NAME = "Azir";
+// -------------------------------------------------------------------------------
 
 export default function CompositionResults({ results, currentActive, selectedUnits = [], level = 8 }) {
     const { isUnlocked, solutions: allSolutions, activeTraits } = results;
     const [hideUnselectedLocked, setHideUnselectedLocked] = useState(false);
-
-    // Get names of selected units for checking
     const selectedUnitNames = new Set(selectedUnits.map(u => u.name));
 
-    // Filter solutions to only show those that fit within the level cap
-    // and optionally hide compositions with unselected locked units
-    const solutions = allSolutions.filter(sol => {
-        const totalUnits = selectedUnits.length + sol.units.length;
-        if (totalUnits > level) return false;
+    // Check for Azir's presence
+    const isAzirSelected = selectedUnitNames.has(AZIR_NAME);
 
-        // If hiding unselected locked units, filter out compositions that contain them
+    // Filter solutions based on hideUnselectedLocked flag AND Shurima rule
+    const solutions = allSolutions.filter(sol => {
+
+        // 1. Check for locked units (Existing Logic)
         if (hideUnselectedLocked) {
-            const hasUnselectedLocked = sol.units.some(u =>
-                LOCKED_UNITS.includes(u.name) && !selectedUnitNames.has(u.name)
-            );
-            if (hasUnselectedLocked) return false;
+            const hasLocked = sol.units.some(item => {
+                if (item.type !== 'unit') return false;
+                const unitName = item.unit.name;
+                return LOCKED_UNITS.includes(unitName) && !selectedUnitNames.has(unitName);
+            });
+            if (hasLocked) return false;
+        }
+
+        // 2. **REVISED Shurima Rule Check**
+        if (!isAzirSelected) {
+            const hasShurima = sol.units.some(item => {
+                const isShurimaUnit = item.type === 'unit' && SHURIMA_UNITS.includes(item.unit.name);
+                const isShurimaWildcard = item.type === 'wildcard' && item.trait === 'Shurima'; // <-- NEW CHECK
+
+                return isShurimaUnit || isShurimaWildcard;
+            });
+
+            // If Azir is NOT selected, and the solution HAS a Shurima unit or wildcard, filter it out.
+            if (hasShurima) return false;
         }
 
         return true;
     });
+
+
     const missing = 5 - currentActive.length;
 
     return (
@@ -72,10 +95,9 @@ export default function CompositionResults({ results, currentActive, selectedUni
                 {solutions && solutions.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {solutions.map((sol, idx) => {
-                            const fullComp = [
-                                ...selectedUnits.map(u => ({ ...u, isOwned: true })),
-                                ...sol.units.map(u => ({ ...u, isOwned: false }))
-                            ].sort((a, b) => a.cost - b.cost);
+                            // Separate wildcards and units
+                            const bridges = sol.units.filter(item => item.type === 'unit').map(item => item.unit);
+                            const wildcards = sol.units.filter(item => item.type === 'wildcard');
 
                             const totalUnits = selectedUnits.length + sol.units.length;
                             const isOverLevel8 = totalUnits > 8;
@@ -100,17 +122,38 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                             }}>
                                                 Level {totalUnits}
                                             </span>
-                                            <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>+{sol.cost}g</span>
                                         </div>
                                     </div>
 
                                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                        {fullComp.map((unit, uIdx) => (
-                                            <div key={uIdx} style={{ opacity: unit.isOwned ? 0.5 : 1, filter: unit.isOwned ? 'grayscale(100%)' : 'none' }}>
+                                        {/* Show selected units (grayed out) */}
+                                        {selectedUnits.map((unit, uIdx) => (
+                                            <div key={`owned-${uIdx}`} style={{ opacity: 0.5, filter: 'grayscale(100%)' }}>
                                                 <UnitIcon
                                                     unit={unit}
                                                     size="48px"
                                                     isLocked={LOCKED_UNITS.includes(unit.name)}
+                                                />
+                                            </div>
+                                        ))}
+
+                                        {/* Show multi-regional units (bridges) */}
+                                        {bridges.map((unit, uIdx) => (
+                                            <div key={`bridge-${uIdx}`}>
+                                                <UnitIcon
+                                                    unit={unit}
+                                                    size="48px"
+                                                    isLocked={LOCKED_UNITS.includes(unit.name)}
+                                                />
+                                            </div>
+                                        ))}
+
+                                        {/* Show wildcard slots as emblem icons */}
+                                        {wildcards.map((wildcard, wIdx) => (
+                                            <div key={`wildcard-${wIdx}`}>
+                                                <WildcardIcon
+                                                    trait={wildcard.trait}
+                                                    size="48px"
                                                 />
                                             </div>
                                         ))}
