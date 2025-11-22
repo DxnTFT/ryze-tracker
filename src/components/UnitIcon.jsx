@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { regionalTraits } from '../data/traits';
-import useLongPress from '../hooks/useLongPress';
 
 // Cost based colors and borders used for the cost indicator
 const COST_COLORS = {
@@ -96,28 +95,18 @@ export default function UnitIcon({
     const wildcardTrait = unit.traits.find(t => regionalSet.has(t));
     const tooltip = isWildcard && wildcardTrait ? `Any ${wildcardTrait} Trait` : unit.name;
 
-    // Bind long press
-    const bind = useLongPress(
-        (e) => {
-            if (onContextMenu) onContextMenu(e);
-        },
-        (e) => {
-            if (onClick) onClick(unit);
-        },
-        { delay: 500 }
-    );
-
     return (
         <div
             className={`unit-icon ${isSelected ? 'selected' : ''} ${isDimmed ? 'dimmed' : ''} ${isExcluded ? 'excluded' : ''}`}
-            {...bind}
-            onContextMenu={onContextMenu}
+            onClick={() => onClick && onClick(unit)}
+            onContextMenu={(e) => {
+                e.preventDefault();
+                if (onContextMenu) onContextMenu(e);
+            }}
             style={{
                 width: size,
                 height: size,
                 cursor: onClick ? 'pointer' : 'default',
-                userSelect: 'none',
-                WebkitUserSelect: 'none'
             }}
             title={isExcluded ? `Excluded: ${unit.name}` : tooltip}
             {...props}

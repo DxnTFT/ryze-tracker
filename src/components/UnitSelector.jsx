@@ -40,7 +40,7 @@ export default function UnitSelector({ selectedUnits, onUnitToggle, excludedUnit
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.8rem' }}>
                     <h2 className="section-title" style={{ marginBottom: 0, borderBottom: 'none' }}>Select Units</h2>
                     <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                        Left-Click (Tap) to Select, Right-Click (Long-Press) to Exclude
+                        Left-Click to Select, Right-Click to Exclude
                     </span>
                 </div>
 

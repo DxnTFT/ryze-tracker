@@ -1,22 +1,12 @@
 import React from 'react';
 import { regionalTraits, traitsWithoutEmblems } from '../data/traits';
-import useLongPress from '../hooks/useLongPress';
 
 function EmblemItem({ trait, count, onAdd, onRemove }) {
-    const bind = useLongPress(
-        (e) => {
-            if (e && e.preventDefault) e.preventDefault();
-            onRemove(trait);
-        },
-        () => onAdd(trait),
-        { delay: 500 }
-    );
-
     return (
         <div
-            {...bind}
+            onClick={() => onAdd(trait)}
             onContextMenu={(e) => {
-                if (e && e.preventDefault) e.preventDefault();
+                e.preventDefault();
                 onRemove(trait);
             }}
             style={{
@@ -59,7 +49,7 @@ export default function EmblemSelector({ selectedEmblems, onEmblemAdd, onEmblemR
             {!horizontal && <h2 className="section-title">Select Emblems</h2>}
             {!horizontal && (
                 <p style={{ color: '#94a3b8', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                    Left-click (Tap) to add, Right-click (Long-press) to remove
+                    Left-click to add, Right-click to remove
                 </p>
             )}
 
