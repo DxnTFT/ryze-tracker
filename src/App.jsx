@@ -6,8 +6,10 @@ import UnitIcon from './components/UnitIcon';
 import { findAllSolutions, calculateActiveTraits } from './utils/optimizer';
 
 function App() {
+  // Force rebuild
   const [selectedUnits, setSelectedUnits] = useState([]);
   const [selectedEmblems, setSelectedEmblems] = useState([]);
+  const [excludedUnits, setExcludedUnits] = useState([]);
   const [level, setLevel] = useState(8);
   const [results, setResults] = useState({ solutions: [], isUnlocked: false, activeTraits: [] });
 
@@ -18,6 +20,16 @@ function App() {
         return prev.filter(u => u.name !== unit.name);
       }
       return [...prev, unit];
+    });
+  };
+
+  const handleUnitExclude = (unit) => {
+    setExcludedUnits(prev => {
+      const exists = prev.includes(unit.name);
+      if (exists) {
+        return prev.filter(name => name !== unit.name);
+      }
+      return [...prev, unit.name];
     });
   };
 
@@ -39,10 +51,16 @@ function App() {
     });
   };
 
+  const handleReset = () => {
+    setSelectedUnits([]);
+    setSelectedEmblems([]);
+    setExcludedUnits([]);
+  };
+
   useEffect(() => {
-    const optimizationResult = findAllSolutions(selectedUnits, selectedEmblems);
+    const optimizationResult = findAllSolutions(selectedUnits, selectedEmblems, excludedUnits);
     setResults(optimizationResult);
-  }, [selectedUnits, selectedEmblems]);
+  }, [selectedUnits, selectedEmblems, excludedUnits]);
 
   const { activeRegional } = calculateActiveTraits(selectedUnits, selectedEmblems);
 
@@ -66,6 +84,9 @@ function App() {
         <UnitSelector
           selectedUnits={selectedUnits}
           onUnitToggle={handleUnitToggle}
+          excludedUnits={excludedUnits}
+          onUnitExclude={handleUnitExclude}
+          onReset={handleReset}
         />
 
         {/* Emblems Section */}
