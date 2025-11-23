@@ -66,14 +66,14 @@ function App() {
 
   return (
     <div className="app-container">
-      <header style={{ textAlign: 'center', marginBottom: '2rem', gridColumn: '1 / -1' }}>
+      <header style={{ textAlign: 'center', marginBottom: '0.5rem', gridColumn: '1 / -1' }}>
         <h1 style={{
-          fontSize: '3rem',
+          fontSize: '1.5rem',
           fontWeight: '800',
           background: 'linear-gradient(to right, #8b5cf6, #06b6d4)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
-          marginBottom: '0.5rem'
+          marginBottom: '0'
         }}>
           Ryze Trait Tracker
         </h1>
