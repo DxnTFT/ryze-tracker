@@ -90,19 +90,20 @@ export default function UnitSelector({ selectedUnits, onUnitToggle, excludedUnit
                     value={costFilter}
                     onChange={(e) => setCostFilter(e.target.value)}
                     style={{
-                        background: 'rgba(0,0,0,0.2)',
+                        background: '#1e293b', // Solid dark background for better visibility
                         border: '1px solid var(--glass-border)',
                         color: 'white',
                         padding: '0.5rem',
-                        borderRadius: '8px'
+                        borderRadius: '8px',
+                        cursor: 'pointer'
                     }}
                 >
-                    <option value="all">All Costs</option>
-                    <option value="1">1 Cost</option>
-                    <option value="2">2 Cost</option>
-                    <option value="3">3 Cost</option>
-                    <option value="4">4 Cost</option>
-                    <option value="5">5 Cost</option>
+                    <option value="all" style={{ background: '#1e293b', color: 'white' }}>All Costs</option>
+                    <option value="1" style={{ background: '#1e293b', color: 'white' }}>1 Cost</option>
+                    <option value="2" style={{ background: '#1e293b', color: 'white' }}>2 Cost</option>
+                    <option value="3" style={{ background: '#1e293b', color: 'white' }}>3 Cost</option>
+                    <option value="4" style={{ background: '#1e293b', color: 'white' }}>4 Cost</option>
+                    <option value="5" style={{ background: '#1e293b', color: 'white' }}>5 Cost</option>
                 </select>
             </div>
 

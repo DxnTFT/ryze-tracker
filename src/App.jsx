@@ -10,7 +10,6 @@ function App() {
   const [selectedUnits, setSelectedUnits] = useState([]);
   const [selectedEmblems, setSelectedEmblems] = useState([]);
   const [excludedUnits, setExcludedUnits] = useState([]);
-  const [level, setLevel] = useState(8);
   const [results, setResults] = useState({ solutions: [], isUnlocked: false, activeTraits: [] });
 
   const handleUnitToggle = (unit) => {
@@ -127,28 +126,7 @@ function App() {
           </div>
         </div>
 
-        {/* Level Selector */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 className="section-title" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Your Level</h3>
-          <select
-            value={level}
-            onChange={(e) => setLevel(parseInt(e.target.value))}
-            style={{
-              background: 'rgba(30, 41, 59, 0.5)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '8px',
-              padding: '0.5rem 1rem',
-              color: '#e2e8f0',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              width: '100%'
-            }}
-          >
-            <option value={8}>Level 8 (max 8 units)</option>
-            <option value={9}>Level 9 (max 9 units)</option>
-            <option value={10}>Level 10 (max 10 units)</option>
-          </select>
-        </div>
+
 
         {/* Results */}
         <div className="results-container">
@@ -156,7 +134,7 @@ function App() {
             results={results}
             currentActive={activeRegional}
             selectedUnits={selectedUnits}
-            level={level}
+            onUnitToggle={handleUnitToggle}
           />
         </div>
       </div>

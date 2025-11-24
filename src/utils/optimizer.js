@@ -62,8 +62,8 @@ function getCombinations(arr, k) {
     ];
 }
 
-// Pre-compute all 5-trait combinations with their masks
-const ALL_COMBOS = getCombinations(REGIONAL_NAMES, 5).map(combo => ({
+// Pre-compute all 4-trait combinations with their masks
+const ALL_COMBOS = getCombinations(REGIONAL_NAMES, 4).map(combo => ({
     traits: combo,
     mask: getTraitMask(combo)
 }));
@@ -106,7 +106,7 @@ export function findAllSolutions(currentUnits, currentEmblems, excludedUnits = [
     const { activeRegional, traitCounts: initialCounts } = calculateActiveTraits(currentUnits, currentEmblems);
 
     // Early exit if already satisfied
-    if (activeRegional.length >= 5) {
+    if (activeRegional.length >= 4) {
         return { isUnlocked: true, solutions: [], activeTraits: activeRegional };
     }
 
@@ -256,9 +256,9 @@ export function findAllSolutions(currentUnits, currentEmblems, excludedUnits = [
         const sizeA = currentUnits.length + a.units.length;
         const sizeB = currentUnits.length + b.units.length;
 
-        // Tier 1: Size <= 8
-        const tierA = sizeA <= 8 ? 0 : 1;
-        const tierB = sizeB <= 8 ? 0 : 1;
+        // Tier 1: Size <= 9
+        const tierA = sizeA <= 9 ? 0 : 1;
+        const tierB = sizeB <= 9 ? 0 : 1;
 
         if (tierA !== tierB) return tierA - tierB;
         return sizeA - sizeB;
@@ -266,7 +266,7 @@ export function findAllSolutions(currentUnits, currentEmblems, excludedUnits = [
 
     return {
         isUnlocked: false,
-        solutions: allSolutions.slice(0, 20),
+        solutions: allSolutions,
         activeTraits: activeRegional
     };
 }

@@ -4,7 +4,7 @@ import UnitIcon from './UnitIcon';
 // Simple fallback unit structure if the assigned unit is missing
 const FALLBACK_UNIT = { name: "Wildcard", cost: 1, traits: [] };
 
-export default function WildcardIcon({ unit, trait, size = '48px' }) {
+export default function WildcardIcon({ unit, trait, size = '48px', onClick }) {
 
     // Use the unit passed by CompositionResults, or fall back
     const repUnit = unit || FALLBACK_UNIT;
@@ -39,6 +39,7 @@ export default function WildcardIcon({ unit, trait, size = '48px' }) {
             isWildcard={true}
             // Use the trait prop for the tooltip if available
             title={`Any ${trait || repUnit.name} Trait`}
+            onClick={onClick}
         />
     );
 }

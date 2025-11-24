@@ -19,86 +19,122 @@ function getAllSingleRegionalUnits(trait) {
     });
 }
 
-// --- Placeholder/Fix Definitions (Adjust these for your actual Set/Data) ---
-const SHURIMA_UNITS = [
-    "Azir", "Nasus", "Renekton", "Xerath", "K'Sante", "Taliyah", "Akshan", "Cassiopeia", "Kha'Zix"
-];
-const AZIR_NAME = "Azir";
 // -------------------------------------------------------------------------------
 
-export default function CompositionResults({ results, currentActive, selectedUnits = [], level = 8 }) {
+export default function CompositionResults({ results, currentActive, selectedUnits = [], onUnitToggle }) {
     const { isUnlocked, solutions: allSolutions, activeTraits } = results;
-    const [hideUnselectedLocked, setHideUnselectedLocked] = useState(false);
-    const selectedUnitNames = new Set(selectedUnits.map(u => u.name));
 
-    // Total units already selected by the user
+    // New State for Trait Filters
+    const [selectedTraitFilters, setSelectedTraitFilters] = useState([]);
+
+    const selectedUnitNames = new Set(selectedUnits.map(u => u.name));
     const selectedUnitCount = selectedUnits.length;
 
-    // Check for Azir's presence
-    const isAzirSelected = selectedUnitNames.has(AZIR_NAME);
+    // Helper to toggle a trait filter
+    const toggleTraitFilter = (trait) => {
+        if (selectedTraitFilters.includes(trait)) {
+            setSelectedTraitFilters(selectedTraitFilters.filter(t => t !== trait));
+        } else {
+            setSelectedTraitFilters([...selectedTraitFilters, trait]);
+        }
+    };
 
-    // Filter solutions based on hideUnselectedLocked flag, Shurima rule, AND LEVEL
+    // Filter solutions based on selected trait filters
     const solutions = allSolutions.filter(sol => {
-
-        // Calculate the total number of units this composition requires:
-        // User's selected units + units in the solution
-        const solUnitCount = sol.units.length;
-        const totalUnitRequirement = selectedUnitCount + solUnitCount;
-
-        // 1. **NEW LEVEL CHECK**
-        // If the required unit count exceeds the current player level, filter it out.
-        if (totalUnitRequirement > level) {
-            return false;
+        // Check if solution has ALL selected filter traits
+        if (selectedTraitFilters.length > 0) {
+            const hasAllFilters = selectedTraitFilters.every(filter =>
+                // Check if trait is in the solution OR already active for the user
+                sol.activeTraits.includes(filter) || currentActive.includes(filter)
+            );
+            if (!hasAllFilters) return false;
         }
-
-        // 2. Check for locked units (Existing Logic)
-        if (hideUnselectedLocked) {
-            const hasLocked = sol.units.some(item => {
-                if (item.type !== 'unit') return false;
-                const unitName = item.unit.name;
-                return LOCKED_UNITS.includes(unitName) && !selectedUnitNames.has(unitName);
-            });
-            if (hasLocked) return false;
-        }
-
-        // 3. REVISED Shurima Rule Check
-        if (!isAzirSelected) {
-            const hasShurima = sol.units.some(item => {
-                const isShurimaUnit = item.type === 'unit' && SHURIMA_UNITS.includes(item.unit.name);
-                const isShurimaWildcard = item.type === 'wildcard' && item.trait === 'Shurima';
-
-                return isShurimaUnit || isShurimaWildcard;
-            });
-            if (hasShurima) return false;
-        }
-
         return true;
     });
 
 
-    const missing = 5 - currentActive.length;
+    const missing = 4 - currentActive.length;
+    const regionalTraitNames = regionalTraits.map(rt => rt[0]).sort();
 
     return (
         <div className="glass-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 className="section-title" style={{ marginBottom: 0 }}>Optimization Results</h2>
-                <button
-                    onClick={() => setHideUnselectedLocked(!hideUnselectedLocked)}
-                    style={{
-                        background: hideUnselectedLocked ? 'rgba(6, 182, 212, 0.2)' : 'rgba(30, 41, 59, 0.5)',
-                        border: hideUnselectedLocked ? '1px solid var(--secondary-color)' : '1px solid var(--glass-border)',
-                        color: hideUnselectedLocked ? '#22d3ee' : '#94a3b8',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        transition: 'all 0.2s',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    {hideUnselectedLocked ? '🔒 Hiding Unlockables' : 'Show All Units'}
-                </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
+                <h2 className="section-title" style={{ marginBottom: 0 }}>Compositions</h2>
+
+                {/* Trait Filter Dropdown */}
+                <div style={{ position: 'relative', marginBottom: '2px' }}>
+                    <select
+                        onChange={(e) => {
+                            if (e.target.value) {
+                                toggleTraitFilter(e.target.value);
+                                e.target.value = ""; // Reset select
+                            }
+                        }}
+                        style={{
+                            background: 'rgba(30, 41, 59, 0.5)',
+                            border: '1px solid var(--glass-border)',
+                            color: '#94a3b8',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            outline: 'none'
+                        }}
+                    >
+                        <option value="">+ Add Filter</option>
+                        {regionalTraitNames.map(trait => (
+                            <option
+                                key={trait}
+                                value={trait}
+                                disabled={selectedTraitFilters.includes(trait)}
+                                style={{ background: '#1e293b', color: 'white' }}
+                            >
+                                {trait}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
+
+            {/* Active Filters Display */}
+            {selectedTraitFilters.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                    {selectedTraitFilters.map(trait => (
+                        <span
+                            key={trait}
+                            onClick={() => toggleTraitFilter(trait)}
+                            style={{
+                                background: 'rgba(139, 92, 246, 0.2)',
+                                color: '#c4b5fd',
+                                border: '1px solid rgba(139, 92, 246, 0.4)',
+                                padding: '0.25rem 0.75rem',
+                                borderRadius: '999px',
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            {trait}
+                            <span style={{ fontSize: '1rem', lineHeight: 0 }}>&times;</span>
+                        </span>
+                    ))}
+                    <span
+                        onClick={() => setSelectedTraitFilters([])}
+                        style={{
+                            fontSize: '0.8rem',
+                            color: '#94a3b8',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                            alignSelf: 'center',
+                            marginLeft: '0.5rem'
+                        }}
+                    >
+                        Clear All
+                    </span>
+                </div>
+            )}
 
             {/* ... Status Div remains the same ... */}
 
@@ -124,19 +160,32 @@ export default function CompositionResults({ results, currentActive, selectedUni
             <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem' }}>
                 {solutions && solutions.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {solutions.map((sol, idx) => {
+                        {solutions.slice(0, 10).map((sol, idx) => {
 
                             // *** Wildcard Logic (Remains the same) ***
                             const usedWildcardUnits = {};
                             const unitIndexTracker = {};
 
                             // Separate and process wildcards and units
-                            const bridges = sol.units.filter(item => item.type === 'unit').map(item => item.unit);
+                            const bridges = sol.units
+                                .filter(item => item.type === 'unit')
+                                .map(item => item.unit);
+                            // REMOVED: .filter(unit => !selectedUnitNames.has(unit.name)); 
+                            // We want to show ALL units in the solution, but style them differently.
+
                             const wildcards = sol.units.filter(item => item.type === 'wildcard').map(wildcardItem => {
                                 const trait = wildcardItem.trait;
 
                                 if (!usedWildcardUnits[trait]) {
-                                    usedWildcardUnits[trait] = getAllSingleRegionalUnits(trait);
+                                    // Get all valid units for this trait
+                                    const allTraitUnits = getAllSingleRegionalUnits(trait);
+
+                                    // Filter out units that are already selected by the user
+                                    const availableUnits = allTraitUnits.filter(u => !selectedUnitNames.has(u.name));
+
+                                    // If all units are selected (edge case), fall back to all units to avoid empty/crash
+                                    usedWildcardUnits[trait] = availableUnits.length > 0 ? availableUnits : allTraitUnits;
+
                                     unitIndexTracker[trait] = 0;
                                 }
 
@@ -159,12 +208,6 @@ export default function CompositionResults({ results, currentActive, selectedUni
                             // Re-calculate the total units for display purposes
                             const totalUnits = selectedUnitCount + sol.units.length;
 
-                            // Check against the passed-in level prop for the warning display
-                            const isOverLevel = totalUnits > level;
-
-                            // Note: If you want to check against Level 8 specifically, use: const isOverLevel8 = totalUnits > 8;
-                            // but checking against 'level' (the prop) is more general and correct.
-
                             return (
                                 <div
                                     key={idx}
@@ -180,16 +223,17 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                                             <span style={{
                                                 fontSize: '0.8rem',
-                                                color: isOverLevel ? '#f87171' : '#94a3b8',
-                                                fontWeight: isOverLevel ? 'bold' : 'normal'
+                                                color: '#94a3b8',
+                                                fontWeight: 'normal'
                                             }}>
-                                                Level {totalUnits}
+                                                {totalUnits} Units
                                             </span>
                                         </div>
                                     </div>
 
                                     {/* ... Unit/Wildcard display block remains the same ... */}
                                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+
                                         {/* Show selected units (grayed out) */}
                                         {selectedUnits.map((unit, uIdx) => (
                                             <div key={`owned-${uIdx}`} style={{ opacity: 0.5, filter: 'grayscale(100%)' }}>
@@ -197,20 +241,25 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                                     unit={unit}
                                                     size="48px"
                                                     isLocked={LOCKED_UNITS.includes(unit.name)}
+                                                    onClick={() => onUnitToggle && onUnitToggle(unit)}
                                                 />
                                             </div>
                                         ))}
 
-                                        {/* Show multi-regional units (bridges) */}
-                                        {bridges.map((unit, uIdx) => (
-                                            <div key={`bridge-${uIdx}`}>
-                                                <UnitIcon
-                                                    unit={unit}
-                                                    size="48px"
-                                                    isLocked={LOCKED_UNITS.includes(unit.name)}
-                                                />
-                                            </div>
-                                        ))}
+                                        {/* Show ALL units in the solution (bridges) */}
+                                        {bridges.map((unit, uIdx) => {
+                                            // Bridges are units suggested by the optimizer, so they are NOT in selectedUnits
+                                            return (
+                                                <div key={`bridge-${uIdx}`}>
+                                                    <UnitIcon
+                                                        unit={unit}
+                                                        size="48px"
+                                                        isLocked={LOCKED_UNITS.includes(unit.name)}
+                                                        onClick={() => onUnitToggle && onUnitToggle(unit)}
+                                                    />
+                                                </div>
+                                            );
+                                        })}
 
                                         {/* Show wildcard slots as emblem icons */}
                                         {wildcards.map((wildcard, wIdx) => (
@@ -219,6 +268,7 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                                     trait={wildcard.trait}
                                                     unit={wildcard.unit} // <-- PASSING THE UNIQUE UNIT
                                                     size="48px"
+                                                    onClick={() => onUnitToggle && wildcard.unit && onUnitToggle(wildcard.unit)}
                                                 />
                                             </div>
                                         ))}
@@ -234,7 +284,8 @@ export default function CompositionResults({ results, currentActive, selectedUni
                                                     background: 'rgba(255,255,255,0.1)',
                                                     padding: '2px 6px',
                                                     borderRadius: '4px',
-                                                    color: '#94a3b8'
+                                                    color: '#94a3b8',
+                                                    border: selectedTraitFilters.includes(trait) ? '1px solid #8b5cf6' : 'none'
                                                 }}
                                             >
                                                 {trait}
@@ -254,10 +305,10 @@ export default function CompositionResults({ results, currentActive, selectedUni
                 )}
             </div>
 
-            {/* ... Currently Active Div remains the same ... */}
+            {/* ... Currently Active Div ... */}
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
                 <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#e2e8f0' }}>
-                    Currently Active ({currentActive.length}/5)
+                    Currently Active ({currentActive.length}/4)
                 </h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {currentActive.map(trait => (
